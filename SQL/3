@@ -1,0 +1,66 @@
+
+1)
+CREATE NONCLUSTERED INDEX DateInd on Marketing.WebLog (SessionStart ASC, ServerID ASC,SessionID)
+INCLUDE (UserName)
+
+DECLARE @StartTime datetime2 = '2010-08-30 16:27';
+SELECT TOP(5000) wl.SessionID, wl.ServerID, wl.UserName
+FROM Marketing.WebLog AS wl
+WHERE wl.SessionStart >= @StartTime
+ORDER BY wl.SessionStart, wl.ServerID;
+GO
+	
+2)
+CREATE NONCLUSTERED INDEX StateInd on Marketing.PostalCode (StateCode, PostalCode)
+INCLUDE (Country)
+
+SELECT PostalCode, Country
+FROM Marketing.PostalCode 
+WHERE StateCode = 'KY'
+ORDER BY StateCode, PostalCode;
+GO
+	
+3) 
+
+CREATE CLASTERED INDEX PrInd on Marketing.Prospect (LastName, FirstName)
+
+CREATE NONCLUSTERED INDEX _dta_index_Prospect_10_229575856__K4_K1_2_3_5_6_7_8_9_10 ON Marketing.Prospect (LastName ASC, ProspectID ASC)
+INCLUDE ([FirstName],[CellPhoneNumber],[HomePhoneNumber],[WorkPhoneNumber],[Demographics],[LatestContact],[EmailAddress])
+WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+
+DECLARE @Counter INT = 0;
+WHILE @Counter < 350
+BEGIN
+	
+SELECT p.LastName, p.FirstName 
+FROM Marketing.Prospect AS p
+INNER JOIN Marketing.Salesperson AS sp
+ON p.LastName = sp.LastName
+	  
+SELECT * 
+FROM Marketing.Prospect AS p
+WHERE p.LastName = 'Smith';
+SET @Counter += 1;
+END;
+
+	
+4) 
+CREATE NONCLUSTERED INDEX MarkInd ON Marketing.Product
+(SubcategoryID ASC)
+INCLUDE (ProductModelID) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX MarkInd1 ON Marketing.ProductModel
+(ProductModel)
+INCLUDE (ProductModelID) WITH (SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF) ON [PRIMARY]
+
+SELECT
+c.CategoryName,
+sc.SubcategoryName,
+pm.ProductModel,
+COUNT(p.ProductID) AS ModelCount
+FROM Marketing.ProductModel pm
+JOIN Marketing.Product p ON p.ProductModelID = pm.ProductModelID
+JOIN Marketing.Subcategory sc ON sc.SubcategoryID = p.SubcategoryID
+JOIN Marketing.Category c ON c.CategoryID = sc.CategoryID
+GROUP BY c.CategoryName, sc.SubcategoryName, pm.ProductModel
+HAVING COUNT(p.ProductID) > 1
