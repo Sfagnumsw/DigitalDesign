@@ -1,0 +1,58 @@
+
+SELECT SUM(SubTotal),MONTH(OrderDate),YEAR(OrderDate)
+FROM Sales.SalesOrderHeader
+GROUP BY MONTH(OrderDate),YEAR(OrderDate)
+ORDER BY YEAR(OrderDate)
+
+
+SELECT TOP (10) a.City as "Город",COUNT(p.BusinessEntityID) as "Количество покупателей"
+FROM Person.Person as p
+JOIN Person.BusinessEntityAddress as b on p.BusinessEntityID = b.BusinessEntityID
+JOIN Person.Address as a on b.AddressID = a.AddressID
+WHERE p.PersonType = 'IN' AND a.City NOT IN ( SELECT SC.City
+                                              FROM Person.BusinessEntity as [key] 
+                                              INNER JOIN Sales.Store as STORE on [key].BusinessEntityID =STORE.BusinessEntityID
+                                              INNER JOIN Person.BusinessEntityAddress as sa on [key].BusinessEntityID = sa.BusinessEntityID
+                                              INNER JOIN Person.Address as SC on sa.AddressID = SC.AddressID)
+GROUP BY a.City
+ORDER BY COUNT(p.BusinessEntityID) DESC
+
+
+SELECT m.LastName,m.FirstName,pr.[Name],sum(so.OrderQty)
+FROM Sales.SalesOrderHeader as s
+JOIN Sales.Customer as c on s.CustomerID = c.CustomerID
+JOIN Person.Person as m on c.PersonID = m.BusinessEntityID
+JOIN Sales.SalesOrderDetail as so on s.SalesOrderID = so.SalesOrderDetailID
+JOIN Production.Product as pr on so.ProductID = pr.ProductID
+WHERE so.OrderQty > 5
+ORDER BY m.FirstName, so.OrderQty DESC
+
+
+SELECT s.OrderDate, m.LastName,m.FirstName,concat('Name: ',pr.Name, '   ','Quantity: ',so.OrderQty) as 'Product'
+FROM Sales.SalesOrderHeader as s
+JOIN Sales.Customer as c on s.CustomerID = c.CustomerID
+JOIN Person.Person as m on c.PersonID = m.BusinessEntityID
+JOIN Sales.SalesOrderDetail as so on s.SalesOrderID = so.SalesOrderDetailID
+JOIN Production.Product as pr on so.ProductID = pr.ProductID
+WHERE s.OrderDate = (SELECT MIN(ord.OrderDate)
+FROM Sales.SalesOrderHeader as ord
+WHERE ord.CustomerID = s.CustomerID)
+ORDER BY s.OrderDate
+
+	
+SELECT CONCAT(p.LastName,' ', left(p.FirstName,1),'.', left(p.MiddleName,1)) as BossName, em.HireDate as BossHireDate, em.BirthDate as BossBirthDate,CONCAT(pp.LastName,' ', left(pp.FirstName,1),'.', left(pp.MiddleName,1)) as EmployeeName, m.HireDate as EmployeeHireDate, m.BirthDate as EmployeeBirthDate
+FROM HumanResources.Employee as em 
+JOIN HumanResources.Employee as m on m.OrganizationNode.GetAncestor(1) = em.OrganizationNode
+INNER JOIN Person.Person as p on em.BusinessEntityID = p.BusinessEntityID
+INNER JOIN Person.Person as pp on m.BusinessEntityID = pp.BusinessEntityID
+WHERE em.BirthDate > m.BirthDate AND em.HireDate > m.HireDate
+ORDER BY em.OrganizationNode, pp.LastName, pp.FirstName,len(em.OrganizationNode.ToString())
+
+
+CREATE PROCEDURE lonely (@FirstDate as date,@SecondDate as date,@RC INT OUT)
+AS
+BEGIN
+SELECT *
+FROM HumanResources.Employee as bd
+WHERE bd.BirthDate BETWEEN @FirstDate AND @SecondDate AND bd.MaritalStatus = 'S' AND bd.Gender = 'M'
+SET @RC = @@ROWCOUNT;
