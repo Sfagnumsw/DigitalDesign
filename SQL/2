@@ -1,0 +1,71 @@
+CREATE DATABASE InternetShopDB
+
+CREATE TABLE Buyers(
+BuyerID int IDENTITY(1,1) PRIMARY KEY,
+NameBuyer nvarchar(50) NOT NULL,
+SexBuyer nvarchar(2) NOT NULL
+);
+GO
+
+CREATE TABLE BuyersAdress(
+BuyerID int IDENTITY(1,1),
+Adress nvarchar(50) NOT NULL, 
+FOREIGN KEY (BuyerID) REFERENCES Buyers(BuyerID) 
+);
+GO
+
+CREATE TABLE Products(
+NameProduct nvarchar(30) PRIMARY KEY,
+UnitPrice int NOT NULL,
+Unit nvarchar(2)
+);
+GO
+
+CREATE TABLE Orders(
+OrderID int PRIMARY KEY,
+BuyerID int,
+Total money,
+FOREIGN KEY (BuyerID) REFERENCES Buyers(BuyerID)
+);
+GO
+
+CREATE TABLE OrdersDetail(
+OrderID int,
+NameProduct nvarchar(30),
+Quantity int,
+LineTotal money,
+FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+FOREIGN KEY (NameProduct) REFERENCES Product(NameProduct)
+);
+GO
+
+INSERT Buyers(NameBuyer,SexBuyer)
+VALUES (N'Петр Романов',N'M'),(N'Софи́я Авгу́ста Фредери́ка А́нгальт-Це́рбстская',N'W'),(N'Александр Рюрикович',N'M');
+GO
+
+INSERT BuyersAdress(Adress)
+VALUES (N'СПб, Сенатская площадь д.1'),(N'СПб, площадь Островского д.1'),(N'СПб, пл. Александра Невского д.1');
+GO
+
+INSERT Products(NameProduct,UnitPrice,Unit)
+VALUES (N'Топор',500,N'шт'),(N'Пила',450,N'шт'),(N'Доски',4890,N'м3'),(N'Брус',9390,N'м3'),(N'Парусина',182,N'м.п.'),(N'Платье бальное',15000,N'шт'),(N'Грудки куриные',180,N'кг'),(N'Салат',52,N'шт');
+GO
+
+INSERT Orders(OrderID)
+VALUES (1),(2),(3)
+GO
+
+INSERT OrdersDetail(Quantity,NameProduct,OrderID)
+VALUES (1,N'Топор',1),(1,N'Пила',1),(200,N'Доски',1),(20,N'Брус',1),(100,N'Парусина',1),(999,N'Платье бальное',2),(5,N'Грудки куриные',3),(5,N'Салат',3);
+GO
+
+UPDATE OrdersDetail //сделать скрипт
+SET LineTotal = (SELECT Quantity * UnitPrice FROM OrdersDetail JOIN Products on Products.NameProduct = OrdersDetail.NameProduct WHERE Products.NameProduct = OrdersDetail.NameProduct)
+GO
+
+UPDATE Orders
+SET BuyerID = (SELECT BuyerID FROM Buyers)
+GO
+
+UPDATE Orders //сделать скрипт
+SET Total = (SELECT SUM(LineTotal) FROM OrdersDetail WHERE Orders.OrderID = OrdersDetail.OrderID)
